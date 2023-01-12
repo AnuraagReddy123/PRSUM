@@ -1,2 +1,5 @@
-Dataset/dataset*
+__pycache__/
 .vscode/
+
+Dataset/dataset*
+Dataset/.env
