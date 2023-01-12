@@ -2,6 +2,7 @@ import re
 import subprocess
 import javalang
 import json
+import os
 
 
 MODIFIERS = ['abstract', 'default', 'final', 'native', 'private',
@@ -569,7 +570,6 @@ if __name__=='__main__':
 
         break
 
-
-
-
-
+    # Delete added.java deleted.java
+    os.remove('added.java')
+    os.remove('deleted.java')
