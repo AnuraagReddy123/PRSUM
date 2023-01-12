@@ -108,6 +108,8 @@ def get_comments(comments: list):
         elif comm.startswith('*'):
             if flag == 1:
                 temp = temp + comm[1:] + " "
+            else:
+                proc_comments.append(comm[1:].strip())
         
 
     return proc_comments
@@ -155,7 +157,7 @@ def process_commits(commits):
     
 if __name__ == '__main__':
 
-    dataset_raw = json.load(open('dataset_testing.json', 'r'))
+    dataset_raw = json.load(open('dataset.json', 'r'))
     dataset_new = dict()
 
     i = 0
