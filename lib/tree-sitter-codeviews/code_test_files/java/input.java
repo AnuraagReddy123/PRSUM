@@ -1,1 +1,0 @@
-                ElasticsearchMappings.addMetaInformation(builder);
