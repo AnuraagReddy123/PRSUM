@@ -176,7 +176,11 @@ if __name__ == '__main__':
             continue
 
         # empty or trivial or long descriptions
-        if len(dataset_raw[d_key]['body']) < 5 or len(dataset_raw[d_key]['body']) > 100:
+        # if len(dataset_raw[d_key]['body']) < 5 or len(dataset_raw[d_key]['body']) > 100:
+        #     continue
+
+        words = nltk.word_tokenize(dataset_raw[d_key]['body'])
+        if len(words) < 5 or len(words) > 100:
             continue
 
         # Continue if body has only punctuation characters in it
