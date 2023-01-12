@@ -571,5 +571,5 @@ if __name__=='__main__':
         break
 
     # Delete added.java deleted.java
-    os.remove('added.java')
-    os.remove('deleted.java')
+    # os.remove('added.java')
+    # os.remove('deleted.java')
