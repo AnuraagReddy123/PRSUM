@@ -3,6 +3,8 @@ import nltk
 from nltk.tokenize import sent_tokenize
 import re
 
+# TODO: Separate tokens based on hyphens and underscores as well
+
 def preprocess_text(text:str):
 
     # can be used PR desc, commit message, commentsm - general preprocessing rules
@@ -149,6 +151,11 @@ def process_commits(commits):
         comments_para = ' '.join(proc_comments)
 
         commit['comments'] = preprocess_text(comments_para)
+    
+    # Commits of the form {commit_sha: commit}
+    # Commit contains keys cm, comments
+    # Drop commits where both cm and comments are empty
+    # commits = {k: v for k, v in commits.items() if len(v['cm']) > 0 or len(v['comments']) > 0}
         
     return commits
 
