@@ -102,19 +102,20 @@ if __name__=='__main__':
         print(d_key)
 
         username, repo_name, pull_number = parse_key(d_key)
+        passed = False
 
-        try:
-            user, repo, pull_req = get_obj(username, repo_name, pull_number, user, repo)
-        except GithubException as e:
-            print(e.data)
-            if e.status == 404:
-                if e.data['message'] == 'Not Found':
-                    continue
-            wait_to_reset()
-            user, repo, pull_req = get_obj(username, repo_name, pull_number, user, repo)
-        except Exception as e:
-            time.sleep(5)
-            user, repo, pull_req = get_obj(username, repo_name, pull_number, user, repo)
+        while not passed:
+            try:
+                user, repo, pull_req = get_obj(username, repo_name, pull_number, user, repo)
+                passed = True
+            except GithubException as e:
+                print(e.data)
+                if e.status == 404:
+                    if e.data['message'] == 'Not Found':
+                        continue
+                wait_to_reset()
+            except Exception as e:
+                time.sleep(300)
 
 
         #print(issue.title)
@@ -156,44 +157,51 @@ if __name__=='__main__':
             commits = pull_req.get_commits()
             print(username, repo_name, pull_number)
         
-        
-        for commit in commits:
-
-            if f"'{commit.sha}'" not in commit_shas:
-                continue
-
+        passed = False
+        while not passed:
             try:
-                print(f'COMMIT {commit.sha}: {len(commit.files)} files.')
-            except GithubException as e:
-               if e.status == 422:
-                   if e.data['message'] == "The request could not be processed because too many files changed":
-                       print("error: too many files")
-                       continue
+                for commit in commits:
 
-            graph_cnt = 0
-            for file in commit.files:
+                    if f"'{commit.sha}'" not in commit_shas:
+                        continue
 
-                # Considering only the changes in JAVA files.
-                if not file.filename.endswith('.java'):
-                    continue
-            
-                if not file.patch:
-                    continue
-                open('diff.txt', 'w+').write(file.patch)
-                subprocess.run('python make_graph.py', shell=True)
-                subprocess.run('python process_graph.py', shell=True)
-                try:
-                    graph = json.load(open('graph_processed.json'))
-                except:
-                    # if the graph is not successfully generated
-                    # continue to the next file
-                    continue
-                dataset[d_key]['commits'][f"'{commit.sha}'"]['graphs'].append(graph)
-                graph_cnt += 1
+                    try:
+                        print(f'COMMIT {commit.sha}: {len(commit.files)} files.')
+                    except GithubException as e:
+                        if e.status == 422:
+                            if e.data['message'] == "The request could not be processed because too many files changed":
+                                print("error: too many files")
+                                continue
 
-                if graph_cnt == Constants.N_GRAPHS:
-                    break
-        
+                    graph_cnt = 0
+                    for file in commit.files:
+
+                        # Considering only the changes in JAVA files.
+                        if not file.filename.endswith('.java'):
+                            continue
+                    
+                        if not file.patch:
+                            continue
+                        open('diff.txt', 'w+').write(file.patch)
+                        subprocess.run('python make_graph.py', shell=True)
+                        subprocess.run('python process_graph.py', shell=True)
+                        try:
+                            graph = json.load(open('graph_processed.json'))
+                        except:
+                            # if the graph is not successfully generated
+                            # continue to the next file
+                            continue
+                        dataset[d_key]['commits'][f"'{commit.sha}'"]['graphs'].append(graph)
+                        graph_cnt += 1
+
+                        if graph_cnt == Constants.N_GRAPHS:
+                            break
+                
+                passed = True
+            except Exception as e:
+                print(e)
+                time.sleep(300)
+
         filename = f'{username}_{repo_name}_{pull_number}'
         json.dump(dataset[d_key], open(f'data/{filename}.json', 'w+'))
         open('data.txt', 'a').write(filename + '\n')

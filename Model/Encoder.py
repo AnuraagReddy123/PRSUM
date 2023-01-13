@@ -36,9 +36,10 @@ class Encoder(nn.Module):
 
         # Number of graph layers can be adjusted
         self.gcn = GCN(node_dim*embed_dim, hidden_dim)
+        self.lin_nodemerge = nn.Linear(hidden_dim, Constants.GRAPH_HID_DIM)
 
-        self.lin_astmergeh = nn.Linear(self.hidden_dim, 1)
-        self.lin_astmergec = nn.Linear(self.hidden_dim, 1)
+        self.lin_astmergeh = nn.Linear(Constants.GRAPH_HID_DIM*Constants.GRAPH_N_NODES, 1)
+        self.lin_astmergec = nn.Linear(Constants.GRAPH_HID_DIM*Constants.GRAPH_N_NODES, 1)
 
         self.lin_mergeh = nn.Linear(2*hidden_dim+MAX_GRAPHS, 1)
         self.lin_mergec = nn.Linear(2*hidden_dim+MAX_GRAPHS, 1)
@@ -120,18 +121,27 @@ class Encoder(nn.Module):
                 data.validate(raise_on_error=True)
 
                 # GCN
-                data = self.gcn(data)
+                data = self.gcn(data) # (num_of_nodes, hidden_dim)
 
                 # Get the graph embedding
                 # !!!!!!!!!!!!!!!!!!!!!
                 # This is where the graph embedding is created. Should it be the mean of the node embeddings?
-                graph_emb = data.mean(dim=0) # (hidden_dim)
+                # Linear layer won't work because the number of nodes is different for each graph
+                # graph_emb = data.mean(dim=0) # (hidden_dim)
+                graph_emb = self.lin_nodemerge(data) # (num_of_nodes, graph_hidden_dim)
+                graph_emb = torch.flatten(graph_emb) # (num_of_nodes*graph_hidden_dim)
+
+                # Fix number of nodes
+                if graph_emb.shape[0] < Constants.GRAPH_N_NODES:
+                    graph_emb = torch.cat([graph_emb, torch.zeros(Constants.GRAPH_N_NODES-graph_emb.shape[0])])
+                elif graph_emb.shape[0] > Constants.GRAPH_N_NODES:
+                    graph_emb = graph_emb[:Constants.GRAPH_N_NODES]
 
                 h_graph.append(graph_emb)
                 c_graph.append(graph_emb)
             
-            h_graph = torch.stack(h_graph, dim=0) # (num_graphs, hidden_dim)
-            c_graph = torch.stack(c_graph, dim=0) # (num_graphs, hidden_dim)
+            h_graph = torch.stack(h_graph, dim=0) # (num_graphs, num_of_nodes*graph_hidden_dim)
+            c_graph = torch.stack(c_graph, dim=0) # (num_graphs, num_of_nodes*graph_hidden_dim)
 
             h_graph = torch.t(self.lin_astmergeh(h_graph)) # (1, num_of_graphs)
             c_graph = torch.t(self.lin_astmergec(c_graph)) # (1, num_of_graphs)
