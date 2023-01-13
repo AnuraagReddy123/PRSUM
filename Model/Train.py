@@ -29,9 +29,9 @@ def plotter(values, file_name):
         plt.ylim([0, 20])
 
     plt.plot(values)
-    plt.savefig(f'{file_name}.png')
+    plt.savefig(f'results/{file_name}.png')
 
-    open(f'{file_name}.txt', 'w+').write(str(values))
+    open(f'results/{file_name}.txt', 'w+').write(str(values))
 
 
 # @tf.function
@@ -160,10 +160,10 @@ if __name__ == '__main__':
 
     losses, accuracies = main_train(model, fns_train, fns_valid, optimizer, epochs=Constants.EPOCHS)
 
-    plotter(losses, 'losses')
-    plotter(accuracies, 'accuracies')
-
     # Save model
     torch.save(model.state_dict(), os.path.join('model_final.pt'))
+
+    plotter(losses, 'losses')
+    plotter(accuracies, 'accuracies')
 
     print('Done')

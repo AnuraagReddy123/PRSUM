@@ -23,15 +23,26 @@ def tensor_to_text(prdesc_tensor, vocab):
 
 if __name__=='__main__':
 
+    modelname = sys.argv[1]
+    filename = sys.argv[2]
+
+    if modelname not in ['final', 'best_train', 'best_valid']:
+        print("Invalid model name")
+        exit(0)
+    
+    if filename not in ['train', 'test', 'valid']:
+        print("Invalid filename")
+        exit(0)
+
     # n_points = int(sys.argv[1])
 
     # fns_test = open('../Dataset/data_train.txt').readlines()
-    fns_test = open('../Dataset/data_test.txt').readlines()
+    fns_test = open('../Dataset/data_'+filename+'.txt').readlines()
 
     model = Model(Constants.VOCAB_SIZE, Constants.HIDDEN_DIM, Constants.EMBED_DIM, Constants.NUM_LAYERS).to(device)
     model = nn.DataParallel(model)
     # model.load_state_dict(torch.load('model_final.pt'))
-    model.load_state_dict(torch.load('models/model_final.pt'))
+    model.load_state_dict(torch.load('models/model_'+modelname+'.pt'))
 
     vocab = eval(open('../Dataset/vocab.txt').read())
     print(len(vocab))
@@ -42,6 +53,8 @@ if __name__=='__main__':
     rouge_1_total = 0.0
     rouge_2_total = 0.0
     rouge_l_total = 0.0
+
+    prediction_file = open('predictions/'+modelname+'_'+filename+'.txt', 'w+')
 
     for (batch_pr, batch_prdesc, batch_prdesc_shift) in generate_batch(fns_test, Constants.BATCH_SIZE):
 
@@ -58,8 +71,8 @@ if __name__=='__main__':
             bleu = bleu4(gt1, pred1)
             r_score = r.get_scores(' '.join(pred1), ' '.join(gt1))[0]
 
-            print(f"Ground Truth:\n{gt}\n\nPrediction:\n{pred}\n")
-            print(f"Bleu: {bleu}\nRouge-1: {r_score['rouge-1']['f']}\nRouge-2: {r_score['rouge-2']['f']}\nRouge-L: {r_score['rouge-l']['f']}\n\n--------------------\n\n")
+            prediction_file.write(f"Ground Truth:\n{gt}\n\nPrediction:\n{pred}\n")
+            prediction_file.write(f"Bleu: {bleu}\nRouge-1: {r_score['rouge-1']['f']}\nRouge-2: {r_score['rouge-2']['f']}\nRouge-L: {r_score['rouge-l']['f']}\n\n--------------------\n\n")
 
             bleu_total += bleu
             rouge_1_total += r_score['rouge-1']['f']
@@ -70,4 +83,5 @@ if __name__=='__main__':
     rouge_1_total /= len(fns_test)
     rouge_2_total /= len(fns_test)
     rouge_l_total /= len(fns_test)
-    print(f"Total Avg Results:\n\nBleu: {bleu_total}\nRouge-1: {rouge_1_total}\nRouge-2: {rouge_2_total}\nRouge-L: {rouge_l_total}\n")
+
+    prediction_file.write(f"Total Avg Results:\n\nBleu: {bleu_total}\nRouge-1: {rouge_1_total}\nRouge-2: {rouge_2_total}\nRouge-L: {rouge_l_total}\n")
