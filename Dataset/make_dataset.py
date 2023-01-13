@@ -91,9 +91,9 @@ if __name__=='__main__':
     for d_key in dataset:
 
         print(f'---------- datapoint {i} -----------')
-        # if i<=18980:
-        #     i+=1
-        #     continue
+        if i<=665:
+             i+=1
+             continue
         i += 1
 
         del dataset[d_key]['id']
@@ -103,18 +103,20 @@ if __name__=='__main__':
 
         username, repo_name, pull_number = parse_key(d_key)
 
-        try:
-            user, repo, pull_req = get_obj(username, repo_name, pull_number, user, repo)
-        except GithubException as e:
-            print(e.data)
-            if e.status == 404:
-                if e.data['message'] == 'Not Found':
-                    continue
-            wait_to_reset()
-            user, repo, pull_req = get_obj(username, repo_name, pull_number, user, repo)
-        except Exception as e:
-            time.sleep(5)
-            user, repo, pull_req = get_obj(username, repo_name, pull_number, user, repo)
+        passed = False
+
+        while not passed:
+            try:
+                user, repo, pull_req = get_obj(username, repo_name, pull_number, user, repo)
+                passed = True
+            except GithubException as e:
+                print(e.data)
+                if e.status == 404:
+                    if e.data['message'] == 'Not Found':
+                        continue
+                wait_to_reset()
+            except Exception as e:
+                time.sleep(300)
 
 
         #print(issue.title)
