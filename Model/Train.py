@@ -104,7 +104,7 @@ def main_train(model: Model, fns_train, fns_valid, optimizer, epochs):
         # Get start time
         start = time.time()
         # For every batch
-        for batch, (batch_pr, batch_prdesc_shift, batch_prdesc) in enumerate(generate_batch(fns_train, Constants.BATCH_SIZE)):
+        for batch, (batch_pr, batch_prdesc, batch_prdesc_shift) in enumerate(generate_batch(fns_train, Constants.BATCH_SIZE)):
 
             # if batch > 0:
             #     continue
@@ -124,7 +124,7 @@ def main_train(model: Model, fns_train, fns_valid, optimizer, epochs):
         valid_acc_sum = 0.0
         num_valid_batches = math.ceil(len(fns_valid)/Constants.BATCH_SIZE)
         # validate the model
-        for batch, (batch_pr, batch_prdesc_shift, batch_prdesc) in enumerate(generate_batch(fns_valid, Constants.BATCH_SIZE)):
+        for batch, (batch_pr, batch_prdesc, batch_prdesc_shift) in enumerate(generate_batch(fns_valid, Constants.BATCH_SIZE)):
 
             valid_loss, valid_accuracy = valid_step(batch_pr, batch_prdesc_shift, batch_prdesc, model)
             valid_losses.append(valid_loss.item())
