@@ -6,4 +6,6 @@ Dataset/.env
 Dataset/data*
 Dataset/vocab.txt
 
-Model/model_*
+Model/models/
+Model/predictions/
+Model/results/

@@ -36,16 +36,16 @@ class Encoder(nn.Module):
 
         # Number of graph layers can be adjusted
         self.gcn = GCN(node_dim*embed_dim, hidden_dim)
-        self.lin_nodemerge = nn.Linear(hidden_dim, Constants.GRAPH_HID_DIM)
+        self.lin_nodemerge = nn.Linear(hidden_dim, Constants.NODE_HID_DIM)
 
-        self.lin_astmergeh = nn.Linear(Constants.GRAPH_HID_DIM*Constants.GRAPH_N_NODES, 1)
-        self.lin_astmergec = nn.Linear(Constants.GRAPH_HID_DIM*Constants.GRAPH_N_NODES, 1)
+        self.lin_astmergeh = nn.Linear(Constants.NODE_HID_DIM*Constants.GRAPH_N_NODES, Constants.GRAPH_HID_DIM)
+        self.lin_astmergec = nn.Linear(Constants.NODE_HID_DIM*Constants.GRAPH_N_NODES, Constants.GRAPH_HID_DIM)
 
-        self.lin_mergeh = nn.Linear(2*hidden_dim+MAX_GRAPHS, 1)
-        self.lin_mergec = nn.Linear(2*hidden_dim+MAX_GRAPHS, 1)
+        self.lin_mergeh = nn.Linear(2*hidden_dim+MAX_GRAPHS*Constants.GRAPH_HID_DIM, Constants.COMMIT_HID_DIM)
+        self.lin_mergec = nn.Linear(2*hidden_dim+MAX_GRAPHS*Constants.GRAPH_HID_DIM, Constants.COMMIT_HID_DIM)
 
-        self.lin_finmergeh = nn.Linear(MAX_COMMITS+hidden_dim, hidden_dim)
-        self.lin_finmergec = nn.Linear(MAX_COMMITS+hidden_dim, hidden_dim)
+        self.lin_finmergeh = nn.Linear(MAX_COMMITS*Constants.COMMIT_HID_DIM+hidden_dim, hidden_dim)
+        self.lin_finmergec = nn.Linear(MAX_COMMITS*Constants.COMMIT_HID_DIM+hidden_dim, hidden_dim)
     
     def initialize_hidden_state(self):
         return torch.zeros((self.num_layers, 1, self.hidden_dim)).to(device), torch.zeros((self.num_layers, 1, self.hidden_dim)).to(device)
@@ -144,31 +144,35 @@ class Encoder(nn.Module):
             h_graph = torch.stack(h_graph, dim=0) # (num_graphs, num_of_nodes*graph_hidden_dim)
             c_graph = torch.stack(c_graph, dim=0) # (num_graphs, num_of_nodes*graph_hidden_dim)
 
-            h_graph = torch.t(self.lin_astmergeh(h_graph)) # (1, num_of_graphs)
-            c_graph = torch.t(self.lin_astmergec(c_graph)) # (1, num_of_graphs)
+            # h_graph = torch.t(self.lin_astmergeh(h_graph)) # (1, num_of_graphs)
+            # c_graph = torch.t(self.lin_astmergec(c_graph)) # (1, num_of_graphs)
 
-            h_graph = torch.stack([h_graph]*self.num_layers) # (num_layers, 1, num_of_graphs)
-            c_graph = torch.stack([c_graph]*self.num_layers) # (num_layers, 1, num_of_graphs)
+            h_graph = self.lin_astmergeh(h_graph) # (num_of_graphs, graph_hidden_dim)
+            c_graph = self.lin_astmergec(c_graph) # (num_of_graphs, graph_hidden_dim)
+            h_graph = torch.reshape(h_graph, (1, -1)) # (1, num_of_graphs*graph_hidden_dim)
+            c_graph = torch.reshape(c_graph, (1, -1)) # (1, num_of_graphs*graph_hidden_dim)
+
+            h_graph = torch.stack([h_graph]*self.num_layers) # (num_layers, 1, num_of_graphs*graph_hidden_dim)
+            c_graph = torch.stack([c_graph]*self.num_layers) # (num_layers, 1, num_of_graphs*graph_hidden_dim)
 
             # Concatenate
-            h_commit = torch.cat((h_src_comments, h_commit_msgs, h_graph), dim=2) # (num_layers, batch_size=1, 2*hidden_dim+num_of_graphs)
-            c_commit = torch.cat((c_src_comments, c_commit_msgs, c_graph), dim=2) # (num_layers, batch_size=1, 2*hidden_dim+num_of_graphs)
+            h_commit = torch.cat((h_src_comments, h_commit_msgs, h_graph), dim=2) # (num_layers, batch_size=1, 2*hidden_dim+num_of_graphs*graph_hidden_dim)
+            c_commit = torch.cat((c_src_comments, c_commit_msgs, c_graph), dim=2) # (num_layers, batch_size=1, 2*hidden_dim+num_of_graphs*graph_hidden_dim)
 
             h_commits.append(h_commit)
             c_commits.append(c_commit)
 
         # Make tensor
-        h_commits = torch.cat(h_commits, dim=1) # (num_layers, num_commits, 2*hidden_dim+num_of_graphs)
-        c_commits = torch.cat(c_commits, dim=1) # (num_layers, num_commits, 2*hidden_dim+num_of_graphs)
+        h_commits = torch.cat(h_commits, dim=1) # (num_layers, num_commits, 2*hidden_dim+num_of_graphs*graph_hidden_dim)
+        c_commits = torch.cat(c_commits, dim=1) # (num_layers, num_commits, 2*hidden_dim+num_of_graphs*graph_hidden_dim)
 
         # Merge all commits
-        h_commits = self.lin_mergeh(h_commits) # (num_layers, num_commits, 1)
-        c_commits = self.lin_mergec(c_commits) # (num_layers, num_commits, 1)
+        h_commits = self.lin_mergeh(h_commits) # (num_layers, num_commits, commit_hidden_dim)
+        c_commits = self.lin_mergec(c_commits) # (num_layers, num_commits, commit_hidden_dim)
 
-        # Transpose
-        h_commits = h_commits.transpose(1, 2) # (num_layers, 1, num_commits)
-        c_commits = c_commits.transpose(1, 2) # (num_layers, 1, num_commits)
-
+        # Flatten
+        h_commits = torch.reshape(h_commits, (self.num_layers, 1, -1)) # (num_layers, 1, num_commits*commit_hidden_dim)
+        c_commits = torch.reshape(c_commits, (self.num_layers, 1, -1)) # (num_layers, 1, num_commits*commit_hidden_dim)
 
         # Encode the issue
         inp_issue = pr['issue_title']
@@ -180,8 +184,8 @@ class Encoder(nn.Module):
         enc_issue_titles, (h_issue_titles, c_issue_titles) = self.enc_issue_titles(emb_issue_titles, (h0, c0)) # (1, seq_len, hidden_dim), (num_layers, 1, hidden_dim), (num_layers, 1, hidden_dim)
 
         # Concatenate
-        h = torch.cat((h_commits, h_issue_titles), dim=2) # (num_layers, 1, num_commits+hidden_dim)
-        c = torch.cat((c_commits, c_issue_titles), dim=2) # (num_layers, 1, num_commits+hidden_dim)
+        h = torch.cat((h_commits, h_issue_titles), dim=2) # (num_layers, 1, num_commits*commit_hidden_dim + hidden_dim)
+        c = torch.cat((c_commits, c_issue_titles), dim=2) # (num_layers, 1, num_commits*commit_hidden_dim + hidden_dim)
 
         # Merge
         h = self.lin_finmergeh(h) # (num_layers, 1, hidden_dim)

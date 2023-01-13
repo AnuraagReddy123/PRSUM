@@ -31,7 +31,7 @@ if __name__=='__main__':
     model = Model(Constants.VOCAB_SIZE, Constants.HIDDEN_DIM, Constants.EMBED_DIM, Constants.NUM_LAYERS).to(device)
     model = nn.DataParallel(model)
     # model.load_state_dict(torch.load('model_final.pt'))
-    model.load_state_dict(torch.load('model_best_valid.pt'))
+    model.load_state_dict(torch.load('models/model_final.pt'))
 
     vocab = eval(open('../Dataset/vocab.txt').read())
     print(len(vocab))
@@ -43,7 +43,7 @@ if __name__=='__main__':
     rouge_2_total = 0.0
     rouge_l_total = 0.0
 
-    for (batch_pr, batch_prdesc_shift, batch_prdesc) in generate_batch(fns_test, Constants.BATCH_SIZE):
+    for (batch_pr, batch_prdesc, batch_prdesc_shift) in generate_batch(fns_test, Constants.BATCH_SIZE):
 
         pred_batch_prdesc = model.module.predict(batch_pr, Constants.MAX_LEN)
 

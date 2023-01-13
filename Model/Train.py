@@ -118,7 +118,7 @@ def main_train(model: Model, fns_train, fns_valid, optimizer, epochs):
 
             if train_accuracy.item() > max_accuracy_train:
                 max_accuracy_train = train_accuracy.item()
-                torch.save(model.state_dict(), os.path.join('model_best_train.pt'))
+                torch.save(model.state_dict(), os.path.join('models', 'model_best_train.pt'))
                 print("Model Train saved.")
 
         valid_acc_sum = 0.0
@@ -139,7 +139,7 @@ def main_train(model: Model, fns_train, fns_valid, optimizer, epochs):
         if avg_valid_acc > max_accuracy_valid:
         #if valid_accuracy.item() > max_accuracy_valid:
             max_accuracy_valid = avg_valid_acc
-            torch.save(model.state_dict(), os.path.join('model_best_valid.pt'))
+            torch.save(model.state_dict(), os.path.join('models','model_best_valid.pt'))
             print("Model Valid saved.")
 
 
