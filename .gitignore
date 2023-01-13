@@ -3,6 +3,7 @@ __pycache__/
 
 Dataset/dataset*
 Dataset/.env
-Dataset/data
-Dataset/data2
-Dataset/data.txt
+Dataset/data*
+Dataset/vocab.txt
+
+Model/model_*
