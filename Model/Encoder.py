@@ -105,7 +105,7 @@ class Encoder(nn.Module):
             for graph in graphs:
                 # Create the Data object
                 edge_index = torch.tensor(graph['edge_index'], dtype=torch.long).t().contiguous()
-                edge_attr = torch.tensor(graph['edge_type'], dtype=torch.float)
+                edge_attr = torch.tensor(graph['edge_type'], dtype=torch.long)
                 x = torch.tensor(graph['node_features'], dtype=torch.long)
 
                 x = x.to(device)
@@ -132,10 +132,11 @@ class Encoder(nn.Module):
                 graph_emb = torch.flatten(graph_emb) # (num_of_nodes*graph_hidden_dim)
 
                 # Fix number of nodes
-                if graph_emb.shape[0] < Constants.GRAPH_N_NODES:
-                    graph_emb = torch.cat([graph_emb, torch.zeros(Constants.GRAPH_N_NODES-graph_emb.shape[0])])
-                elif graph_emb.shape[0] > Constants.GRAPH_N_NODES:
-                    graph_emb = graph_emb[:Constants.GRAPH_N_NODES]
+                MAX_ALLOWED = Constants.GRAPH_N_NODES*Constants.GRAPH_HID_DIM
+                if graph_emb.shape[0] < MAX_ALLOWED:
+                    graph_emb = torch.cat((graph_emb, torch.zeros(MAX_ALLOWED-graph_emb.shape[0]).to(device)), dim=0)
+                else:
+                    graph_emb = graph_emb[:MAX_ALLOWED]
 
                 h_graph.append(graph_emb)
                 c_graph.append(graph_emb)

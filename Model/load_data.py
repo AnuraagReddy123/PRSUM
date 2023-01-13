@@ -103,7 +103,7 @@ def generate_batch(filenames, batch_size):
                 graphs = pad_graphs(graphs)
 
                 for graph in graphs:
-                    graph['node_features'] = torch.tensor(graph['node_features'], dtype=torch.float).to(device)
+                    graph['node_features'] = torch.tensor(graph['node_features'], dtype=torch.long).to(device)
                     graph['edge_index'] = torch.tensor(graph['edge_index'], dtype=torch.long).to(device)
                     graph['edge_type'] = torch.tensor(graph['edge_type'], dtype=torch.long).to(device)
                 

@@ -106,8 +106,8 @@ def main_train(model: Model, fns_train, fns_valid, optimizer, epochs):
         # For every batch
         for batch, (batch_pr, batch_prdesc_shift, batch_prdesc) in enumerate(generate_batch(fns_train, Constants.BATCH_SIZE)):
 
-            if batch > 0:
-                continue
+            # if batch > 0:
+            #     continue
             # print(f"batch: {batch}")
 
             # Train the batch
