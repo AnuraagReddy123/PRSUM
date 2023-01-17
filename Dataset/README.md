@@ -22,7 +22,7 @@ chmod +x ../lib/gumtree/gumtree/bin/gumtree
 python make_dataset.py
 ```
 
-4. Run the build_vocab.py script to build the vocabulary. This is used to build the vocabulary for the source code comments and the commit messages.
+4. Run the build_vocab.py script to build the vocabulary
 ```
 python build_vocab.py
 ```
