@@ -18,13 +18,16 @@ def loss_fn (logits, target_prdesc):
     mask = (target_prdesc != 1).float() # The padding value is 1
     # print("Mask: ", mask)
     # Transpose the logits
-    # logits = logits.transpose(1, 2)
+    # logits = logits.transpose(1, 2) # (batch_size, vocab_size, max_pr_len)
     loss = nn.CrossEntropyLoss(reduction='none')(logits, target_prdesc)
     # print(loss, loss.shape)
     loss = loss * mask
     # print(loss, loss.shape)
     # exit(0)
-    loss = loss.sum() / mask.sum()
+    if mask.sum() == 0:
+        loss = loss.sum()
+    else:
+        loss = loss.sum() / mask.sum()
 
     return loss
 

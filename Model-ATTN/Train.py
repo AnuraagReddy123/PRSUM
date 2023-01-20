@@ -58,11 +58,13 @@ def train_step(encoder:Encoder, decoder:Decoder, input_pr, target_prdesc_shift, 
     loss = 0
     logits = None
     dec_h, dec_c = batch_h, batch_c
+    losses = []
     for i in range(target_prdesc.shape[1]):
         decoder_in = torch.unsqueeze(target_prdesc_shift[:, i], 1) # (batch_size, 1)
         logit, dec_h, dec_c = decoder(decoder_in, batch_enc, dec_h, dec_c)
         target_prdesc = torch.tensor(target_prdesc, dtype=torch.long, device=device)
         loss += loss_fn(logit, target_prdesc[:, i])
+        losses.append(loss.item())
 
         logit = torch.unsqueeze(logit, 1)
         if logits is None:

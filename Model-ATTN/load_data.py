@@ -98,7 +98,7 @@ def generate_batch(filenames, batch_size):
 
             # Processing
             pr['body'] = torch.tensor(pad_body(pr['body'])).type(torch.long).to(device)
-            pr['issue_title'] = torch.tensor(pad_text(pr['issue_title'] if len(pr['issue_title']) > 0 else [1], Constants.ISSUE_LEN)).type(torch.long).to(device).to(device)
+            pr['issue_title'] = torch.tensor(pad_text(pr['issue_title'] if len(pr['issue_title']) > 0 else [1], Constants.ISSUE_LEN)).type(torch.long).to(device)
 
             commits = pr['commits']
             commits = pad_commits(commits)
