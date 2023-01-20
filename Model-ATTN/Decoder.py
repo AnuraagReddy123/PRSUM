@@ -1,6 +1,7 @@
 import torch
 import torch.nn as nn
 from Encoder import Encoder
+from Attention import Attention
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 print(device)
@@ -14,46 +15,61 @@ class Decoder(nn.Module):
         self.vocab_size = vocab_size
         self.embed_dim = embed_dim
         self.num_layers = num_layers
+        self.attention = Attention(hidden_dim)
 
         self.emb = nn.Embedding(vocab_size, embed_dim)
         self.lstm = nn.LSTM(embed_dim, hidden_dim, num_layers=num_layers, batch_first=True,  dropout=0.1)
+        self.wc = nn.Linear(2*hidden_dim, hidden_dim, bias=False)
         self.linear = nn.Sequential(
             nn.Linear(hidden_dim, 2048),
             nn.ReLU(),
             nn.Linear(2048, vocab_size)
         )
 
-    def forward (self, batch_prdesc, h_enc, c_enc):
+    def forward (self, input, batch_enc, batch_h, batch_c):
         '''
-        batch_prdesc: (batch_size, max_len)
+        input: (batch_size, 1)
+        batch_enc: (batch_size, max_pr_len, hidden_dim)
+        batch_h: (num_layers, batch_size, hidden_dim)
+        batch_c: (num_layers, batch_size, hidden_dim)
         '''
-        # Convert to tensor
-        batch_prdesc = torch.tensor(batch_prdesc).to(device) # (batch_size, max_len)
-        emb_prdesc = self.emb(batch_prdesc) # (batch_size, max_len, embed_dim)
-        out, (h, c) = self.lstm(emb_prdesc, (h_enc, c_enc)) # (batch_size, max_len, hidden_dim), (num_layers, batch_size, hidden_dim), (num_layers, batch_size, hidden_dim)
 
-        logits = self.linear(out) # (batch_size, max_len, vocab_size)
+        embedding = self.emb(input) # (batch_size, 1, embed_dim)
+        out, (h, c) = self.lstm(embedding, (batch_h, batch_c)) # (batch_size, 1, hidden_dim), (num_layers, batch_size, hidden_dim), (num_layers, batch_size, hidden_dim)
 
-        # # softmax
-        # probs = torch.softmax(logits, dim=-1)
+        # Attention
+        context = self.attention(batch_enc, out) # (batch_size, 1, hidden_dim)
 
-        return logits, h, c
+        # Concatenate context and out
+        out = torch.squeeze(out, 1) # (batch_size, hidden_dim)
+        out = torch.cat((context, out), 1) # (batch_size, 2*hidden_dim)
+
+        # Linear
+        out = self.wc(out) # (batch_size, hidden_dim)
+
+        # Linear
+        out = self.linear(out) # (batch_size, vocab_size)
+
+        return out, h, c
 
 
 if __name__ == '__main__':
+    vocab_size = 100
+    hidden_dim = 256
+    embed_dim = 256
+    num_layers = 2
     batch_size = 32
-    max_len = 100
-    hidden_dim = 10
-    vocab_size = 20
-    embed_dim = 15
-
-    batch_prdesc = torch.randint(0, vocab_size, (batch_size, max_len))
-    h_enc = torch.zeros((1, batch_size, hidden_dim))
-    c_enc = torch.zeros((1, batch_size, hidden_dim))
-
-    decoder = Decoder(hidden_dim, vocab_size, embed_dim)
-    logits, h, c = decoder(batch_prdesc, h_enc, c_enc)
-
+    max_pr_len = 100
+    max_prdesc_len = 20
+    decoder = Decoder(vocab_size, hidden_dim, embed_dim, num_layers)
+    decoder = decoder.to(device)
+    input_pr = torch.randint(0, vocab_size, (batch_size, max_pr_len)).to(device)
+    target_prdesc_shift = torch.randint(0, vocab_size, (batch_size, max_prdesc_len)).to(device)
+    target_prdesc = torch.randint(0, vocab_size, (batch_size, max_prdesc_len)).to(device)
+    encoder = Encoder(vocab_size, hidden_dim, embed_dim, num_layers)
+    encoder = encoder.to(device)
+    h_enc, c_enc = encoder(input_pr)
+    logits, h, c = decoder(target_prdesc_shift, h_enc, c_enc)
     print(logits.shape)
     print(h.shape)
     print(c.shape)

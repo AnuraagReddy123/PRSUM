@@ -54,16 +54,19 @@ class Encoder(nn.Module):
         
         batch_h = []
         batch_c = []
+        batch_enc = []
 
         for pr in batch_pr:
-            h, c = self.encode(pr)
+            enc, h, c = self.encode(pr)
             batch_h.append(h)
             batch_c.append(c)
+            batch_enc.append(enc)
 
         batch_h = torch.cat(batch_h, dim=1) # (num_layers, batch_size, hidden_dim)
         batch_c = torch.cat(batch_c, dim=1) # (num_layers, batch_size, hidden_dim)
+        batch_enc = torch.cat(batch_enc, dim=0) # (batch_size, seq_len, hidden_dim)
 
-        return batch_h, batch_c
+        return batch_enc, batch_h, batch_c
 
 
     def encode(self, pr):
@@ -92,10 +95,11 @@ class Encoder(nn.Module):
             # Encoding
             h0, c0 = self.initialize_hidden_state()
             enc_src_comments, (h_src_comments, c_src_comments) = self.enc_src_comments(emb_src_comments, (h0, c0)) # (batch_size=1, seq_len, hidden_dim), (num_layers, 1, hidden_dim), (num_layers, 1, hidden_dim)
-            
+            enc_commits.append(enc_src_comments)
 
             h0, c0 = self.initialize_hidden_state()
             enc_commit_msgs, (h_commit_msgs, c_commit_msgs) = self.enc_commit_msgs(emb_commit_msgs, (h0, c0)) # (1, seq_len, hidden_dim), (num_layers, 1, hidden_dim), (num_layers, 1, hidden_dim)
+            enc_commits.append(enc_commit_msgs)
 
             # Get graphs
             graphs = commit['graphs'] # This is the diff graph
@@ -166,6 +170,7 @@ class Encoder(nn.Module):
         # Make tensor
         h_commits = torch.cat(h_commits, dim=1) # (num_layers, num_commits, 2*hidden_dim+num_of_graphs*graph_hidden_dim)
         c_commits = torch.cat(c_commits, dim=1) # (num_layers, num_commits, 2*hidden_dim+num_of_graphs*graph_hidden_dim)
+        enc_commits = torch.cat(enc_commits, dim=1) # (1, num_commits*comment_seq_len+num_commits*commit_seq_len, hidden_dim)
 
         # Merge all commits
         h_commits = self.lin_mergeh(h_commits) # (num_layers, num_commits, commit_hidden_dim)
@@ -187,12 +192,13 @@ class Encoder(nn.Module):
         # Concatenate
         h = torch.cat((h_commits, h_issue_titles), dim=2) # (num_layers, 1, num_commits*commit_hidden_dim + hidden_dim)
         c = torch.cat((c_commits, c_issue_titles), dim=2) # (num_layers, 1, num_commits*commit_hidden_dim + hidden_dim)
+        enc = torch.cat((enc_commits, enc_issue_titles), dim=1) # (1, num_commits*comment_seq_len+num_commits*commit_seq_len+seq_len, hidden_dim)
 
         # Merge
         h = self.lin_finmergeh(h) # (num_layers, 1, hidden_dim)
         c = self.lin_finmergec(c) # (num_layers, 1, hidden_dim)
 
-        return h, c
+        return enc, h, c
 
 
 if __name__ == '__main__':

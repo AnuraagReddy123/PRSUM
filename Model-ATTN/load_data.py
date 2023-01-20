@@ -136,10 +136,10 @@ if __name__ == '__main__':
         print('Batch: ', i)
         batch_pr, batch_prdesc, batch_prdesc_shift = batch
 
-        out = model(batch_pr, batch_prdesc_shift)
-        print(out.shape)
-        print(batch_prdesc)
-        print(batch_prdesc_shift)
+        # out = model(batch_pr, batch_prdesc_shift)
+        # print(out.shape)
+        print(batch_prdesc.shape)
+        print(batch_prdesc_shift.shape)
 
         if i == 2:
             break

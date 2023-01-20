@@ -9,3 +9,7 @@ Dataset/vocab.txt
 Model/models/
 Model/predictions/
 Model/results/
+
+Model-ATTN/models/
+Model-ATTN/predictions/
+Model-ATTN/results/

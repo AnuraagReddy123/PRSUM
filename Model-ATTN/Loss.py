@@ -18,7 +18,7 @@ def loss_fn (logits, target_prdesc):
     mask = (target_prdesc != 1).float() # The padding value is 1
     # print("Mask: ", mask)
     # Transpose the logits
-    logits = logits.transpose(1, 2)
+    # logits = logits.transpose(1, 2)
     loss = nn.CrossEntropyLoss(reduction='none')(logits, target_prdesc)
     # print(loss, loss.shape)
     loss = loss * mask
@@ -39,6 +39,7 @@ def accuracy_fn (logits, target_prdesc):
             Shape: (batch_size, max_pr_len)
     '''
     # Mask the accuracy
+    logits = torch.nn.Softmax(dim=-1)(logits)
     mask = (target_prdesc != 1).float() # The padding value is 1
     pred = torch.argmax(logits, dim=-1)
     correct = (pred == target_prdesc).float()
