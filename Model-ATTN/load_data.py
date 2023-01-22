@@ -32,18 +32,23 @@ default_commit =  {
     'graphs': [default_graph]*N_GRAPHS
 }
 
-def pad_body(body: list):
-    
-    '''Fixes the size of body'''
+def pad_body(body:torch.Tensor, shift: bool = False):
     if len(body) >= PRDESC_LEN:
-        body = body[:PRDESC_LEN-1] + [2]
+        if not shift:
+            body = body[:PRDESC_LEN-1]
+            body = torch.cat((body, torch.tensor([2]).to(device)))
+        else:
+            body = body[:PRDESC_LEN]
+
     elif len(body) < PRDESC_LEN:
-        body.append(2)
-        body.extend([1]*(PRDESC_LEN - len(body)))
+        body = torch.cat((body, torch.tensor([1]*(PRDESC_LEN - len(body))).to(device)))
 
     return body
 
 def pad_text(text: list, max_len: int):
+    if max_len == 0:
+        return text
+    
     if len(text) >= max_len:
         text = text[:max_len]
     elif len(text) < max_len:
@@ -97,7 +102,7 @@ def generate_batch(filenames, batch_size):
             pr = json.load(open(join('..', 'Dataset', 'data2', name+'.json'), 'r'))
 
             # Processing
-            pr['body'] = torch.tensor(pad_body(pr['body'])).type(torch.long).to(device)
+            pr['body'] = torch.tensor(pr['body']+[2]).type(torch.long).to(device)
             pr['issue_title'] = torch.tensor(pad_text(pr['issue_title'] if len(pr['issue_title']) > 0 else [1], Constants.ISSUE_LEN)).type(torch.long).to(device)
 
             commits = pr['commits']
@@ -122,7 +127,11 @@ def generate_batch(filenames, batch_size):
             batch_pr.append(pr)
             batch_prdesc.append(pr['body'])
             batch_prdesc_shift.append(torch.cat([torch.tensor([0]).type(torch.long).to(device), pr['body'][:-1]], dim=0))
-                            
+        
+        # Pad body in batch_prdesc
+        batch_prdesc = [pad_body(prdesc, False) for prdesc in batch_prdesc]
+        batch_prdesc_shift = [pad_body(prdesc, True) for prdesc in batch_prdesc_shift]
+
         batch_prdesc = torch.stack(batch_prdesc, dim=0)
         batch_prdesc_shift = torch.stack(batch_prdesc_shift, dim=0)
 
@@ -140,6 +149,7 @@ if __name__ == '__main__':
         # print(out.shape)
         print(batch_prdesc.shape)
         print(batch_prdesc_shift.shape)
+        print(batch_prdesc[0])
 
         if i == 2:
             break

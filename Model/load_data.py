@@ -32,14 +32,16 @@ default_commit =  {
     'graphs': [default_graph]*N_GRAPHS
 }
 
-def pad_body(body: list):
-    
-    '''Fixes the size of body'''
+def pad_body(body:torch.Tensor, shift: bool = False):
     if len(body) >= N_PRDESC:
-        body = body[:N_PRDESC-1] + [2]
+        if not shift:
+            body = body[:N_PRDESC-1]
+            body = torch.cat((body, torch.tensor([2]).to(device)))
+        else:
+            body = body[:N_PRDESC]
+
     elif len(body) < N_PRDESC:
-        body.append(2)
-        body.extend([1]*(N_PRDESC - len(body)))
+        body = torch.cat((body, torch.tensor([1]*(N_PRDESC - len(body))).to(device)))
 
     return body
 
@@ -89,7 +91,7 @@ def generate_batch(filenames, batch_size):
             pr = json.load(open(join('..', 'Dataset', 'data2', name+'.json'), 'r'))
 
             # Processing
-            pr['body'] = torch.tensor(pad_body(pr['body'])).type(torch.long).to(device)
+            pr['body'] = torch.tensor(pr['body']+[2]).type(torch.long).to(device)
             pr['issue_title'] = torch.tensor(pr['issue_title'] if len(pr['issue_title']) > 0 else [1]).type(torch.long).to(device).to(device)
 
             commits = pr['commits']
@@ -114,7 +116,11 @@ def generate_batch(filenames, batch_size):
             batch_pr.append(pr)
             batch_prdesc.append(pr['body'])
             batch_prdesc_shift.append(torch.cat([torch.tensor([0]).type(torch.long).to(device), pr['body'][:-1]], dim=0))
-                            
+
+        # Pad body in batch_prdesc
+        batch_prdesc = [pad_body(prdesc, False) for prdesc in batch_prdesc]
+        batch_prdesc_shift = [pad_body(prdesc, True) for prdesc in batch_prdesc_shift]
+
         batch_prdesc = torch.stack(batch_prdesc, dim=0)
         batch_prdesc_shift = torch.stack(batch_prdesc_shift, dim=0)
 

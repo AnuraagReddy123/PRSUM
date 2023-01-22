@@ -6,9 +6,9 @@ except:
     VOCAB_SIZE = MAX_VOCAB
 
 MAX_LEN = 100
-COMMIT_LEN = 70
-COMMENT_LEN = 200
-ISSUE_LEN = 100
+COMMIT_LEN = 70 # Set 0 to disable
+COMMENT_LEN = 200 # Set 0 to disable
+ISSUE_LEN = 100 # Set 0 to disable
 
 HIDDEN_DIM = 128
 EMBED_DIM = 128
@@ -28,3 +28,6 @@ NODE_HID_DIM = 2
 GRAPH_HID_DIM = 2
 
 COMMIT_HID_DIM = 2
+
+# Email: # Change to receive email notifications
+EMAIL = 'cs19b031@iittp.ac.in'

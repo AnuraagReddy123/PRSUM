@@ -11,6 +11,14 @@ import torch.optim as optim
 import math
 import matplotlib.pyplot as plt
 
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
+from email.mime.base import MIMEBase
+from email import encoders
+import logging
+from io import StringIO
+import smtplib
+
 from Encoder import Encoder
 from Decoder import Decoder
 import Constants 
@@ -19,6 +27,23 @@ from load_data import generate_batch
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 print(device)
+
+def send_email_crash_notification(crash_message):
+    email = Constants.EMAIL
+    send_to_mail = Constants.EMAIL
+    subject = "Application crashed"
+
+    msg = MIMEMultipart()
+    msg['From'] = email
+    msg['To'] = send_to_mail
+    msg['Subject'] = subject
+    message = crash_message
+    msg.attach(MIMEText(message, 'plain'))
+
+    server = smtplib.SMTP('smtp.gmail.com', 587)
+    server.ehlo()
+    server.starttls()
+    server.login(email, Constants.PASSWORD)
 
 
 def plotter(values, file_name):
@@ -102,9 +127,10 @@ def valid_step(encoder:Encoder, decoder:Decoder, input_pr, target_prdesc_shift, 
 
         loss = 0
         logits = None
+        dec_h, dec_c = batch_h, batch_c
         for i in range(target_prdesc.shape[1]):
             decoder_in = torch.unsqueeze(target_prdesc_shift[:, i], 1) # (batch_size, 1)
-            logit = decoder(decoder_in, batch_enc, batch_h, batch_c)
+            logit, dec_h, dec_c = decoder(decoder_in, batch_enc, dec_h, dec_c)
             target_prdesc = torch.tensor(target_prdesc, dtype=torch.long, device=device)
             loss += loss_fn(logit, target_prdesc[:, i])
 
@@ -170,7 +196,7 @@ def main_train(encoder: Encoder, decoder:Decoder, fns_train, fns_valid, optimize
             valid_accuracies.append(valid_accuracy)
             print('Validation: Epoch {} Batch {} Loss {:.4f} Accuracy {:.4f}'.format(epoch + 1, batch, valid_loss, valid_accuracy))
 
-            valid_acc_sum += valid_accuracy.item()
+            valid_acc_sum += valid_accuracy
 
             # print(valid_accuracy.item(), max_accuracy_valid, valid_accuracy.item() > max_accuracy_valid)
 
@@ -178,8 +204,8 @@ def main_train(encoder: Encoder, decoder:Decoder, fns_train, fns_valid, optimize
         if avg_valid_acc > max_accuracy_valid:
         #if valid_accuracy.item() > max_accuracy_valid:
             max_accuracy_valid = avg_valid_acc
-            torch.save(encoder.state_dict(), os.path.join('models','model_best_valid.pt'))
-            torch.save(decoder.state_dict(), os.path.join('models','model_best_valid.pt'))
+            torch.save(encoder.state_dict(), os.path.join('models','encoder_best_valid.pt'))
+            torch.save(decoder.state_dict(), os.path.join('models','decoder_best_valid.pt'))
             print("Model Valid saved.")
 
 

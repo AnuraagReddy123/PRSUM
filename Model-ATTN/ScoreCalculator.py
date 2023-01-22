@@ -13,7 +13,7 @@ Usage:
 '''
 
 
-with open(join('predictions', modelname+'_'+dataname+'.out'), 'r', encoding='utf-8') as f:
+with open(join('predictions', modelname+'_'+dataname+'.txt'), 'r', encoding='utf-8') as f:
     bleu = 0.0
     rouge1 = 0.0
     rouge2 = 0.0

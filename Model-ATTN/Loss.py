@@ -15,7 +15,7 @@ def loss_fn (logits, target_prdesc):
             Shape: (batch_size, max_pr_len)
     '''
     # Mask the loss
-    mask = (target_prdesc != 1).float() # The padding value is 1
+    mask = (target_prdesc != 2).float() # The padding value is 1
     # print("Mask: ", mask)
     # Transpose the logits
     # logits = logits.transpose(1, 2) # (batch_size, vocab_size, max_pr_len)
@@ -43,7 +43,7 @@ def accuracy_fn (logits, target_prdesc):
     '''
     # Mask the accuracy
     logits = torch.nn.Softmax(dim=-1)(logits)
-    mask = (target_prdesc != 1).float() # The padding value is 1
+    mask = (target_prdesc != 2).float() # The padding value is 1
     pred = torch.argmax(logits, dim=-1)
     correct = (pred == target_prdesc).float()
     correct = correct * mask
