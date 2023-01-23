@@ -15,7 +15,7 @@ class Decoder(nn.Module):
         self.embed_dim = embed_dim
         self.num_layers = num_layers
 
-        self.emb = nn.Embedding(vocab_size, embed_dim)
+        self.emb = nn.Embedding(vocab_size, embed_dim, padding_idx=1)
         self.lstm = nn.LSTM(embed_dim, hidden_dim, num_layers=num_layers, batch_first=True,  dropout=0.1)
         self.linear = nn.Sequential(
             nn.Linear(hidden_dim, 2048),

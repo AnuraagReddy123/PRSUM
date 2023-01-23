@@ -13,3 +13,7 @@ Model/results/
 Model-ATTN/models/
 Model-ATTN/predictions/
 Model-ATTN/results/
+
+Model-PtrATTN/models/
+Model-PtrATTN/predictions/
+Model-PtrATTN/results/

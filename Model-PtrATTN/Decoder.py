@@ -2,6 +2,7 @@ import torch
 import torch.nn as nn
 from Encoder import Encoder
 from Attention import Attention
+from PtrGen import PtrGen
 import Constants
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -16,7 +17,8 @@ class Decoder(nn.Module):
         self.vocab_size = vocab_size
         self.embed_dim = embed_dim
         self.num_layers = num_layers
-        self.attention = Attention(hidden_dim)
+        self.atten = Attention(hidden_dim)
+        self.ptrgen = PtrGen(hidden_dim)
 
         self.emb = nn.Embedding(vocab_size, embed_dim, padding_idx=1)
         self.lstm = nn.LSTM(embed_dim, hidden_dim, num_layers=num_layers, batch_first=True,  dropout=0.1)
@@ -38,8 +40,10 @@ class Decoder(nn.Module):
         embedding = self.emb(input) # (batch_size, 1, embed_dim)
         out, (h, c) = self.lstm(embedding, (batch_h, batch_c)) # (batch_size, 1, hidden_dim), (num_layers, batch_size, hidden_dim), (num_layers, batch_size, hidden_dim)
 
-        # Attention
-        context = self.attention(batch_enc, out) # (batch_size, 1, hidden_dim)
+        # Pointer Generator and Attention
+        context = self.atten(batch_enc, out) # (batch_size, 1, hidden_dim)
+        p_gen = self.ptrgen(embedding, out, context) # (batch_size, 1, 1)
+
 
         # Concatenate context and out
         out = torch.squeeze(out, 1) # (batch_size, hidden_dim)
@@ -50,6 +54,15 @@ class Decoder(nn.Module):
 
         # Linear
         out = self.linear(out) # (batch_size, vocab_size)
+
+        # Softmax
+        out = torch.softmax(out, dim=1) # (batch_size, vocab_size)
+
+        # Pointer Generator
+        out = p_gen*out + (1-p_gen)*context # (batch_size, 1, hidden_dim)
+
+        # take log
+        out = torch.log(out+1e-10)
 
         return out, h, c
     
