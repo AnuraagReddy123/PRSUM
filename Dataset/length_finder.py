@@ -64,21 +64,21 @@ for file in files:
 
 constfile = open('../Constants_dup.py', 'w+')
 for line in open('../Constants.py', 'r'):
-    if 'MAX_LEN_COMMIT' in line:
+    if line.startswith('MAX_LEN_COMMIT'):
         constfile.write(f'MAX_LEN_COMMIT = {maxlen_cm}\n')
-    elif 'MAX_LEN_COMMENT' in line:
+    elif line.startswith('MAX_LEN_COMMENT'):
         constfile.write(f'MAX_LEN_COMMENT = {maxlen_comm}\n')
-    elif 'AVG_LEN_COMMIT' in line:
+    elif line.startswith('AVG_LEN_COMMIT'):
         constfile.write(f'AVG_LEN_COMMIT = {len_cm // cnt}\n')
-    elif 'AVG_LEN_COMMENT' in line:
+    elif line.startswith('AVG_LEN_COMMENT'):
         constfile.write(f'AVG_LEN_COMMENT = {len_comm // cnt}\n')
-    elif 'MAX_LEN_ISSUE' in line:
+    elif line.startswith('MAX_LEN_ISSUE'):
         constfile.write(f'MAX_LEN_ISSUE = {maxlen_issue}\n')
-    elif 'AVG_LEN_ISSUE' in line:
+    elif line.startswith('AVG_LEN_ISSUE'):
         constfile.write(f'AVG_LEN_ISSUE = {len_issue // cntissue}\n')
-    elif 'MAX_NUM_NODES' in line:
+    elif line.startswith('MAX_NUM_NODES'):
         constfile.write(f'MAX_NUM_NODES = {max_nodes}\n')
-    elif 'AVG_NUM_NODES' in line:
+    elif line.startswith('AVG_NUM_NODES'):
         constfile.write(f'AVG_NUM_NODES = {num_nodes // cntgraphs}\n')
     else:
         constfile.write(line)
