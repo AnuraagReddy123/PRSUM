@@ -161,7 +161,7 @@ if __name__ == '__main__':
     losses, accuracies = main_train(model, fns_train, fns_valid, optimizer, epochs=Constants.EPOCHS)
 
     # Save model
-    torch.save(model.state_dict(), os.path.join('model_final.pt'))
+    torch.save(model.state_dict(), os.path.join('models', 'model_final.pt'))
 
     plotter(losses, 'losses')
     plotter(accuracies, 'accuracies')

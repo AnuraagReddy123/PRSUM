@@ -22,17 +22,23 @@ chmod +x ../lib/gumtree/gumtree/bin/gumtree
 python make_dataset.py
 ```
 
-4. Run the build_vocab.py script to build the vocabulary
+4. Run length_finder.py script to update values in Constants.py
+```
+python length_finder.py
+```
+
+
+5. Run the build_vocab.py script to build the vocabulary
 ```
 python build_vocab.py
 ```
 
-5. Run the split.py script to split the dataset into train, validation and test sets.
+6. Run the split.py script to split the dataset into train, validation and test sets.
 ```
 python split.py
 ```
 
-6. Finally run the makefile to remove the intermediate files.
+7. Finally run the makefile to remove the intermediate files.
 ```
 make clean
 ```

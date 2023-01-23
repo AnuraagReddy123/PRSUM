@@ -27,7 +27,7 @@ class Encoder(nn.Module):
 
         # !!!!!!!!!!!!!!!!!!!!
         # Separate embedding layers for graph and text. Should they be the same? Should graph have different vocabularies?
-        self.embedding = nn.Embedding(vocab_size, self.embed_dim)
+        self.embedding = nn.Embedding(vocab_size, self.embed_dim, padding_idx=1)
         self.graph_emb = nn.Embedding(vocab_size, self.embed_dim)
         
         self.enc_commit_msgs = nn.LSTM(embed_dim, hidden_dim,  num_layers=num_layers, batch_first=True, dropout=0.1)

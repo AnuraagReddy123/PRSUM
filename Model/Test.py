@@ -56,12 +56,13 @@ if __name__=='__main__':
 
     prediction_file = open('predictions/'+modelname+'_'+filename+'.txt', 'w+')
 
-    for (batch_pr, batch_prdesc, batch_prdesc_shift) in generate_batch(fns_test, Constants.BATCH_SIZE):
+    for num, (batch_pr, batch_prdesc, batch_prdesc_shift) in enumerate(generate_batch(fns_test, Constants.BATCH_SIZE)):
 
         pred_batch_prdesc = model.module.predict(batch_pr, Constants.MAX_LEN)
 
         for i in range(len(batch_pr)):
 
+            prediction_file.write(f'Datapoint num: {num*Constants.BATCH_SIZE + i}\n')
             gt = tensor_to_text(batch_prdesc[i], vocab)
             pred = tensor_to_text(pred_batch_prdesc[i], vocab)
             # Take only uptill the END token
