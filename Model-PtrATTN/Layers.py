@@ -8,6 +8,7 @@ import torch.nn.functional as F
 from Utils import get_graph
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+
 print(device)
 
 '''

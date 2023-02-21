@@ -1,4 +1,4 @@
-MAX_VOCAB = 50000
+MAX_VOCAB = 10000 # Change back to 50000
 try:
     vocab = eval(open('../Dataset/vocab.txt').read())
     VOCAB_SIZE = min(len(vocab), MAX_VOCAB)
@@ -22,7 +22,7 @@ COMMENT_LEN = AVG_LEN_COMMENT
 ISSUE_LEN = MAX_LEN_ISSUE
 
 HIDDEN_DIM = 128
-EMBED_DIM = 128 # Ensure same
+EMBED_DIM = 128 # Ensure same as hidden_dim
 NUM_LAYERS = 2
 BATCH_SIZE = 4
 EPOCHS=50
