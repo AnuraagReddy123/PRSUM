@@ -18,6 +18,8 @@ maxlen_issue = -math.inf
 max_nodes = -math.inf
 max_pr = None
 
+num_files = len(os.listdir('data'))
+
 for pr in prs.values():
     # len_issue += len(pr['issue_titles'])
     # cntissue += 1
@@ -80,6 +82,8 @@ for line in open('../Constants.py', 'r'):
         constfile.write(f'MAX_NUM_NODES = {max_nodes}\n')
     elif line.startswith('AVG_NUM_NODES'):
         constfile.write(f'AVG_NUM_NODES = {num_nodes // cntgraphs}\n')
+    elif line.startswith('NUM_FILES'):
+        constfile.write(f'NUM_FILES = {num_files}\n')
     else:
         constfile.write(line)
 

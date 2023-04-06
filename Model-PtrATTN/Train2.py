@@ -30,12 +30,14 @@ def train(model:PGN, optimizer, vocab, fns_train, fns_valid):
         start_epoch (int, optional): The starting epoch number. Defaults to 0.
     """
 
-    val_losses = np.inf
+    train_losses = np.inf
+    valid_losses = np.inf
     for epoch in range(Constants.EPOCHS):
         batch_losses = []
 
+        print('Training...')
+        model.train()
         for batch, (batch_pr, batch_prdesc, batch_prdesc_shift, batch_oov, batch_oov_len) in enumerate(generate_batch(fns_train, Constants.BATCH_SIZE)):
-            model.train()
             optimizer.zero_grad()
             loss = model(batch_pr, batch_prdesc, batch_prdesc_shift, batch_oov_len)
             batch_losses.append(loss.item())
@@ -43,16 +45,32 @@ def train(model:PGN, optimizer, vocab, fns_train, fns_valid):
 
             optimizer.step()
 
-            if batch % 100 == 0:
+            if batch % 10 == 0:
                 print(f"Epoch: {epoch+1}, Batch: {batch}, Loss: {loss.item()}")
                 # print(f"Epoch: {epoch+1}, Batch: {batch}, Loss: {loss.item()}, Accuracy: {accuracy.item()}")
+        
+        epoch_loss = np.mean(batch_losses)
+        if epoch_loss < train_losses:
+            train_losses = epoch_loss
+            torch.save(model.state_dict(), os.path.join('models', 'model_best_train.pt'))
+            print("Model Train saved.")
 
+        print('Evaluating...')
+        model.eval()
+        with torch.no_grad():
+            for batch, (batch_pr, batch_prdesc, batch_prdesc_shift, batch_oov, batch_oov_len) in enumerate(generate_batch(fns_valid, Constants.BATCH_SIZE)):
+                loss = model(batch_pr, batch_prdesc, batch_prdesc_shift, batch_oov_len)
+                batch_losses.append(loss.item())
+
+                if batch % 10 == 0:
+                    print(f"Epoch: {epoch+1}, Batch: {batch}, Loss: {loss.item()}")
+                    # print(f"Epoch: {epoch+1}, Batch: {batch}, Loss: {loss.item()}, Accuracy: {accuracy.item()}")
 
         epoch_loss = np.mean(batch_losses)
-        
-            
-
-
+        if epoch_loss < valid_losses:
+            valid_losses = epoch_loss
+            torch.save(model.state_dict(), os.path.join('models', 'model_best_valid.pt'))
+            print("Model Valid saved.")
 
 
 if __name__ == '__main__':
@@ -65,5 +83,9 @@ if __name__ == '__main__':
     model = nn.DataParallel(model)
     optimizer = optim.Adam(model.parameters(), lr=0.001)
 
-    losses, accuracies = train(model, optimizer, vocab, fns_train, fns_valid)
-    x = 5
+    train(model, optimizer, vocab, fns_train, fns_valid)
+
+    # Save the model
+    torch.save(model.state_dict(), os.path.join('models', 'model_final  .pt'))
+
+    

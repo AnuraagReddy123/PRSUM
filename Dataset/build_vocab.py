@@ -2,7 +2,13 @@ import json
 import os
 from os import path
 
-MAX_VOCAB = 50000
+import sys
+sys.path.append('.')
+sys.path.append('..')
+
+import Constants
+
+MAX_VOCAB = Constants.VOCAB_SIZE
 
 
 def compute_vocab():

@@ -5,6 +5,11 @@ Dataset/dataset*
 Dataset/.env
 Dataset/data*
 Dataset/vocab.txt
+Dataset/*.ast
+Dataset/*.java
+Dataset/graph_processed.json
+Dataset/graph.json
+Dataset/diff.txt
 
 Model/models/
 Model/predictions/

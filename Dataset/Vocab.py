@@ -168,15 +168,16 @@ def pr_to_index(pr, vocab:Vocab):
 
 if __name__ == '__main__':
     fns_train = open(join('data_train.txt'), 'r').readlines()
+    data = open(join('data.txt'), 'r').readlines()
     vocab = build_vocab(fns_train)
     pickle.dump(vocab, open('vocab.pkl', 'wb'))
     
     if not os.path.exists('data3'):
         os.mkdir('data3')
 
-    for i in range(len(fns_train)):
-        print('Processing %d/%d' % (i+1, len(fns_train)))
-        pr = json.load(open(join('data', fns_train[i].strip()+'.json'), 'r'))
+    for i in range(len(data)):
+        print('Processing %d/%d' % (i+1, len(data)))
+        pr = json.load(open(join('data', data[i].strip()+'.json'), 'r'))
         pr = pr_to_index(pr, vocab)
-        json.dump(pr, open(join('data3', fns_train[i].strip()+'.json'), 'w'))
+        json.dump(pr, open(join('data3', data[i].strip()+'.json'), 'w'))
 
