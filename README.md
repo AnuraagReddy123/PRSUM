@@ -1,5 +1,5 @@
 # PRSUM
-Summarizes Pull Request Descriptions using multiple artifacts  
+Summarizes pull requests and generates pull requests descriptions using multiple artifacts  
 
 We try to explore whether stacking data hierarchially can help in summarizing pull request descriptions. We use the following artifacts to summarize pull request descriptions:
 - Source Code Comments
